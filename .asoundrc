@@ -1,0 +1,27 @@
+#pcm.!default {
+#	type hw
+#	card 3
+#	device 1
+#}
+
+#ctl.!default {
+#	type hw
+#	card 3
+#	device 1
+#}
+
+pcm.!default {
+	#type hw
+	#card 3
+	#device 1
+	type pulse
+	# This device was found by running the command pactl list
+	#device alsa_output.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo.monitor
+	#device bluez_sink.D0_8A_55_A1_EE_A3.a2dp_sink.monitor
+	#device bluez_sink.AA_00_A7_00_A0_DA.a2dp_sink.monitor
+}
+
+#ctl.pulse_monitor {
+#	type pulse
+#	device alsa_output.usb-Burr-Brown_from_TI_USB_Audio_CODEC-00.analog-stereo.monitor
+#}
