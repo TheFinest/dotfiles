@@ -55,6 +55,9 @@ require("lazy").setup({
         {'L3MON4D3/LuaSnip'},     -- Required
       }
     },
-    'dccsillag/magma-nvim'
+    {
+        'dccsillag/magma-nvim',
+        run = ':UpdateRemotePlugins'
+    }
 })
 
