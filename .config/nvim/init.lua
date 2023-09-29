@@ -8,9 +8,9 @@ vim.opt.guicursor = ""
 vim.opt.scrolloff = 8
 vim.opt.smartindent = true
 vim.opt.backspace = "indent,eol,start"
-vim.cmd "colorscheme strawberry-light"
 vim.opt.termguicolors = true
-vim.opt.background="dark"
+vim.cmd "colorscheme solarized"
+vim.opt.background = "light"
 vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
 vim.opt.undofile = true
 vim.opt.updatetime = 50
