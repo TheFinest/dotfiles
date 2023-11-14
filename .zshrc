@@ -2,7 +2,7 @@
 (cat ~/.cache/wal/sequences)
 
 if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-  tmux new-session -A -s main
+    exec tmux
 fi
 
 # If you come from bash you might have to change your $PATH.
@@ -184,6 +184,7 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 '
+
 
 [ -f "/home/thekeymaster/.ghcup/env" ] && source "/home/thekeymaster/.ghcup/env" # ghcup-env
 
