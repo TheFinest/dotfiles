@@ -16,6 +16,7 @@ vim.opt.background = "light"
 vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
 vim.opt.undofile = true
 vim.opt.updatetime = 50
+vim.opt.title = true
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 
