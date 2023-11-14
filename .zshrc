@@ -1,6 +1,10 @@
 # Change color scheme
 (cat ~/.cache/wal/sequences)
 
+if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
+  tmux new-session -A -s main
+fi
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -108,7 +112,6 @@ source $ZSH/oh-my-zsh.sh
 # Aliases
 alias nas="sshfs thegatekeeper@10.0.0.162:Server/ Server/ -o reconnect,default_permissions,allow_other" 
 alias mulitplesound="pacmd load-module module-combine-sink"
-alias sec="mpv --no-audio rtsp://192.168.0.86:8554/unicast"
 alias midi="sudo aconnect -i"
 #alias anki="/home/thekeymaster/Git/anki/run > /dev/null" 
 #alias ls='ls -has --color=always'
@@ -118,20 +121,15 @@ alias school='cd ~/Server/School/Second\ Year/Second\ Semester/'
 alias projects='cd ~/Server/Projects'
 alias df='df -h'
 alias lsd='ls -d */'
-alias display='display -geometry 1920x1080+0+1080 -resize 1920x1080'
 alias update='sudo emerge -auDN --with-bdeps=y @world'
-alias lights='cava | python /home/thekeymaster/Server/Projects/LED\ Lights/Lights.py'
-alias youtube-dl='youtube-dl --download-archive /home/thekeymaster/archive.txt -f bestvideo+bestaudio --merge-output-format mkv'
-alias yt-dlp='yt-dlp'
+alias yt-dl='yt-dlp --download-archive /home/thekeymaster/archive.txt -f bestvideo+bestaudio --merge-output-format mkv'
 alias here='xfce4-terminal --working-directory=$PWD'
 alias krita='openclose krita'
 alias cmpv='openclose mpv'
 alias sioyek='detach ~/sioyek/Sioyek-x86_64.AppImage'
-alias joplin='detach ~/.joplin/Joplin.AppImage'
 alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
 alias vim='nvim'
 alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
-
 
 # Functions
 detach() {
