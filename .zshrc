@@ -1,9 +1,9 @@
 # Change color scheme
 (cat ~/.cache/wal/sequences)
 
-if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-    exec tmux
-fi
+#if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
+#    exec tmux
+#fi
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -114,7 +114,7 @@ alias nas="sshfs thegatekeeper@10.0.0.162:Server/ Server/ -o reconnect,default_p
 alias mulitplesound="pacmd load-module module-combine-sink"
 alias midi="sudo aconnect -i"
 #alias anki="/home/thekeymaster/Git/anki/run > /dev/null" 
-#alias ls='ls -has --color=always'
+alias ls='ls -has --color=always'
 alias c='clear'
 alias h='history'
 alias school='cd ~/Server/School/Second\ Year/Second\ Semester/'
