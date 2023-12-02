@@ -10,7 +10,6 @@
 
 # Path to your oh-my-zsh installation.
 export ZSH="/home/thekeymaster/.oh-my-zsh"
-export PATH=/home/thekeymaster/.nimble/bin:$PATH
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -157,35 +156,8 @@ tor() {
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
 
-export EDITOR=code
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/thekeymaster/.mujoco/mujoco210/bin
-export LD_PRELOAD=/usr/lib64/libGLEW.so
+export EDITOR=nvim
 stty -ixon
 neofetch
-
-conda_init() {
-    __conda_setup="$('/home/thekeymaster/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-    eval "$__conda_setup"
-}
-
-: '
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/thekeymaster/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/thekeymaster/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/thekeymaster/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/thekeymaster/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-'
-
-
-[ -f "/home/thekeymaster/.ghcup/env" ] && source "/home/thekeymaster/.ghcup/env" # ghcup-env
 
 unalias gp
