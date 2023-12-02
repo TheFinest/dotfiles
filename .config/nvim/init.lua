@@ -38,8 +38,14 @@ require("lazy").setup({
         tag = '0.1.3', 
         dependencies = {'nvim-lua/plenary.nvim'}
     },
-    'nvim-treesitter/nvim-treesitter', run = ':TSUpdate',
-    'theprimeagen/harpoon',
+    {
+        'nvim-treesitter/nvim-treesitter', 
+        run = ':TSUpdate'
+    },
+    {
+        'ThePrimeagen/harpoon',
+        dependencies = {'nvim-lua/plenary.nvim'}
+    },
     'mbbill/undotree',
     {
       'VonHeikemen/lsp-zero.nvim',
