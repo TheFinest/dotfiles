@@ -1,0 +1,33 @@
+# Window Geometry
+border.width: 0
+
+# Border Colours
+#window.active.border.color: #ab01b6
+#window.inactive.border.color: #660f6b
+#menu.border.color: #ab01b6
+#window.active.client.color: #ffffff
+#window.inactive.client.color: #cccccc
+
+# Menus
+#menu.title.bg: Raised Gradient Vertical
+menu.title.bg.color: #658fb5
+#menu.title.bg.colorTo: #4d6982
+menu.title.text.color: #ffffff
+#menu.title.text.justify: Left
+
+#menu.seperator.color: #444444
+#menu.seperator.width: 1
+#menu.seperator.padding.width: 6
+#menu.seperator.padding.height: 3
+
+#menu.items.bg: Flat Solid
+menu.items.bg.color: #f8f5f2
+menu.items.text.color: #ffffff
+#menu.items.text.disabled.text.color: #aaaaaa
+
+#menu.items.active.bg: Flat Gradient Vertical
+menu.items.active.bg.color: #628cb2
+#menu.items.active.bg.colorTo: #50708d
+menu.items.active.text.color: #ffffff
+#menu.items.active.disabled.text.color: #aaaaaa
+
