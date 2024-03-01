@@ -75,6 +75,10 @@ export ZSH="/home/thekeymaster/.oh-my-zsh"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
+
+# zsh-autosuggestions & zsh-syntax-highlighting are custom ones btw
+# - Nathan
+
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 autoload -U colors && colors
 autoload -U compinit && compinit
@@ -123,12 +127,12 @@ alias lsd='ls -d */'
 alias update='sudo emerge -auDN --with-bdeps=y @world'
 alias yt-dl='yt-dlp --download-archive /home/thekeymaster/archive.txt -f bestvideo+bestaudio --merge-output-format mkv'
 alias here='xfce4-terminal --working-directory=$PWD'
-alias krita='openclose krita'
 alias cmpv='openclose mpv'
-alias sioyek='detach ~/sioyek/Sioyek-x86_64.AppImage'
+#alias sioyek='detach ~/sioyek/Sioyek-x86_64.AppImage'
 alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
 alias vim='nvim'
 alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
+alias fman='compgen -c | fzf | xargs man'
 
 # Functions
 detach() {
@@ -161,3 +165,6 @@ stty -ixon
 neofetch
 
 unalias gp
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64:/usr/lib"
+export CUDA_HOME=/usr/local/cuda

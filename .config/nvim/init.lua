@@ -63,8 +63,9 @@ require("lazy").setup({
       }
     },
     {
-        'dccsillag/magma-nvim',
-        run = ':UpdateRemotePlugins'
+        'benlubas/molten-nvim',
+        version = '^1.0.0',
+        build = ':UpdateRemotePlugins'
     }
 })
 
