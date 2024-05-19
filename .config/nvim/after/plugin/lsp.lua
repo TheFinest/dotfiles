@@ -8,6 +8,18 @@ end)
 
 -- (Optional) Configure lua language server for neovim
 require('lspconfig').lua_ls.setup(lsp.nvim_lua_ls())
+require('lspconfig').pyright.setup{
+    settings = {
+        pyright = {
+            autoImportCompletion = true,
+        },
+        python = {
+            analysis = {
+                typeCheckingMode = 'off'
+            }
+        }
+    }
+}
 
 lsp.setup()
 

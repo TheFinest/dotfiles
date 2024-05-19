@@ -68,4 +68,3 @@ require("lazy").setup({
         build = ':UpdateRemotePlugins'
     }
 })
-
