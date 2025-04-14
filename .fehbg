@@ -1,0 +1,2 @@
+#!/bin/sh
+feh --no-fehbg --bg-scale '/home/thekeymaster/bliss_windows_xp.jpg' 
