@@ -2,6 +2,9 @@
 #    exec tmux
 #fi
 
+GPG_TTY=`tty`
+export GPG_TTY
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -126,7 +129,8 @@ alias yt-dl='yt-dlp --download-archive /home/thekeymaster/archive.txt -f bestvid
 alias here='xfce4-terminal --working-directory=$PWD'
 alias cmpv='openclose mpv'
 #alias sioyek='detach ~/sioyek/Sioyek-x86_64.AppImage'
-alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
+#alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
+alias vpn='mullvad-vpn'
 alias vim='nvim'
 alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
 alias fman='compgen -c | fzf | xargs man'
@@ -145,14 +149,6 @@ openclose() {
 
 cd() {
     builtin cd "$@" && ls;
-}
-
-tor() {
-    temp=$PWD
-    builtin cd /home/thekeymaster/TOR/tor-browser_en-US
-    ./start-tor-browser.desktop
-    builtin cd $temp
-    exit
 }
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
