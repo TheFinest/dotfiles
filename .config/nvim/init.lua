@@ -113,3 +113,5 @@ vim.api.nvim_create_autocmd("FileType", {
     end
   end,
 })
+
+vim.treesitter.language.add('python', { path = "/usr/lib/libtree-sitter-python.so" })
