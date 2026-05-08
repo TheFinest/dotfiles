@@ -85,6 +85,7 @@ autoload -U compinit && compinit
 autoload -U promptinit && promptinit
 
 source $ZSH/oh-my-zsh.sh
+source /usr/share/fzf/key-bindings.zsh
 
 # User configuration
 
@@ -120,18 +121,17 @@ alias midi="sudo aconnect -i"
 alias ls='ls -has --color=always'
 alias c='clear'
 alias h='history'
-alias school='cd ~/Server/School/Second\ Year/Second\ Semester/'
-alias projects='cd ~/Server/Projects'
 alias df='df -h'
 alias lsd='ls -d */'
-alias update='sudo emerge -auDN --with-bdeps=y @world'
+#alias update='sudo emerge -auDN --with-bdeps=y @world'
 alias yt-dl='yt-dlp --download-archive /home/thekeymaster/archive.txt -f bestvideo+bestaudio --merge-output-format mkv'
 alias here='xfce4-terminal --working-directory=$PWD'
 alias cmpv='openclose mpv'
 #alias sioyek='detach ~/sioyek/Sioyek-x86_64.AppImage'
 #alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
 alias vpn='mullvad-vpn'
-alias vim='nvim'
+alias vf='vim $(fzf)'
+alias cf='cd $(fzf)'
 alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
 alias fman='compgen -c | fzf | xargs man'
 
@@ -153,7 +153,9 @@ cd() {
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
 
-export EDITOR=nvim
+export EDITOR=vim
+export BAT_THEME="Catppuccin Latte"
+export FZF_DEFAULT_OPTS='--preview "bat --style=header,numbers --color=always --line-range :500 {}"'
 stty -ixon
 neofetch
 
