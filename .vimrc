@@ -34,8 +34,15 @@ set undodir=~/.vim/undo
 let maplocalleader = " "
 let mapleader = " "
 
-nnoremap <C-d> <C-d>zz
-nnoremap <C-u> <C-u>zz
+"nnoremap <C-d> <C-d>zz
+"nnoremap <C-u> <C-u>zz
+
+" Center the screen when jumping to the next/previous search match
+"nnoremap n nzz
+"nnoremap N Nzz
+
+" Bonus: Center the screen when joining lines (keeping your eye on the break)
+nnoremap J Jz
 
 set backspace=indent,eol,start " backspace over everything in insert mode
 
@@ -49,7 +56,8 @@ call plug#begin('~/.vim/plugged')
     Plug 'neoclide/coc.nvim', {'branch': 'release'}
     Plug 'mbbill/undotree'
     Plug 'sheerun/vim-polyglot' 
-    Plug 'terryma/vim-smooth-scroll'
+    "Plug 'terryma/vim-smooth-scroll'
+    Plug 'psliwka/vim-smoothie'
     Plug 'preservim/nerdtree'
     Plug 'ctrlpvim/ctrlp.vim'
 call plug#end()
@@ -72,13 +80,25 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 nnoremap <silent> K :call CocActionAsync('doHover')<CR>
 
-noremap <silent> <c-u> :call smooth_scroll#up(&scroll, 10, 2)<CR>
-noremap <silent> <c-d> :call smooth_scroll#down(&scroll, 10, 2)<CR>
-noremap <silent> <c-b> :call smooth_scroll#up(&scroll*2, 5, 4)<CR>
-noremap <silent> <c-f> :call smooth_scroll#down(&scroll*2, 5, 4)<CR>
+"noremap <silent> <c-u> zz:call smooth_scroll#up(&scroll, 8, 2)<CR>
+"noremap <silent> <c-d> zz:call smooth_scroll#down(&scroll, 8, 2)<CR>
+"noremap <silent> <c-b> :call smooth_scroll#up(&scroll*2, 5, 4)<CR>
+"noremap <silent> <c-f> :call smooth_scroll#down(&scroll*2, 5, 4)<CR>
+
+" --- SMOOTHIE CONFIG ---
+let g:smoothie_enabled = 1
+let g:smoothie_speed_constant_ms = 10
+let g:smoothie_speed_exponent_all_platforms = 0
+let g:smoothie_break_threshold = 1000 " Prevent teleporting on long jumps
+
+" The 'Single-Trigger' mappings
+nnoremap <silent> <C-d> :set scrolloff=0 <bar> call smoothie#do("\<lt>C-d>zz") <bar> set scrolloff=8<CR>
+nnoremap <silent> <C-u> :set scrolloff=0 <bar> call smoothie#do("\<lt>C-u>zz") <bar> set scrolloff=8<CR>
+nnoremap <silent> n     :call smoothie#do("nzz")<CR>
+nnoremap <silent> N     :call smoothie#do("Nzz")<CR>
 
 nnoremap <C-n> :NERDTreeToggle<CR>
-nnoremap <leader>f :NERDTreeFind<CR>  " EXTREMELY USEFUL: Opens the tree and 
+nnoremap <leader>f :NERDTreeFind<CR>
 
 let g:ctrlp_map = '<c-p>'
 let g:ctrlp_cmd = 'CtrlP'

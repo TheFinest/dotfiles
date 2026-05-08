@@ -131,9 +131,10 @@ alias cmpv='openclose mpv'
 #alias vpn='cd /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor; sudo openvpn --config /home/thekeymaster/Mullvad/mullvad_config_linux_ca_tor/mullvad_ca_tor.conf'
 alias vpn='mullvad-vpn'
 alias vf='vim $(fzf)'
-alias cf='cd $(fzf)'
+#alias cf='cd $(fd --type d | fzf)' # already done by ALT-C
+alias cf='cd "$(fd --type d . ~ | fzf)"'
 alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
-alias fman='compgen -c | fzf | xargs man'
+# alias fman='compgen -c | fzf | xargs man' # we literally never use this...
 
 # Functions
 detach() {
@@ -150,6 +151,7 @@ openclose() {
 cd() {
     builtin cd "$@" && ls;
 }
+
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
 
