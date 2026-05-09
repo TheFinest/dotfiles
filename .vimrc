@@ -97,8 +97,34 @@ nnoremap <silent> <C-u> :set scrolloff=0 <bar> call smoothie#do("\<lt>C-u>zz") <
 nnoremap <silent> n     :call smoothie#do("nzz")<CR>
 nnoremap <silent> N     :call smoothie#do("Nzz")<CR>
 
-nnoremap <C-n> :NERDTreeToggle<CR>
+
+let g:NERDTreeChDirMode = 2
+
+" Find the Git root and make it the 'home base'
+function! SyncToProjectRoot()
+  " Only run on real files, not tool windows or empty buffers
+  if &buftype != '' || expand('%:p') == ''
+    return
+  endif
+
+  " Look for a .git folder starting from the current file
+  let l:git_root = finddir('.git/..', expand('%:p:h') . ';')
+  
+  if !empty(l:git_root)
+    " Change Vim's actual working directory to the project root
+    execute 'lcd ' . fnameescape(l:git_root)
+  endif
+endfunction
+
+" Trigger this whenever you open a file
+autocmd BufReadPost,BufEnter * call SyncToProjectRoot()
+
+"nnoremap <C-n> :NERDTreeToggle<CR>
+nnoremap <C-n> :execute 'NERDTreeToggle ' . getcwd()<CR>
 nnoremap <leader>f :NERDTreeFind<CR>
+
+" Stops nerdtree from expanding the tree when I hit <leader>f in its window.
+nnoremap <silent> <leader>f :if &filetype !=# 'nerdtree' <bar> execute 'NERDTreeFind' <bar> endif<CR>
 
 let g:ctrlp_map = '<c-p>'
 let g:ctrlp_cmd = 'CtrlP'
