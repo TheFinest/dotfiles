@@ -70,7 +70,7 @@ inoremap <silent><expr> <TAB>
 inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
 function! s:check_back_space() abort
-  local col = col('.') - 1
+  let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
@@ -80,6 +80,9 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 inoremap <silent><expr> <cr> coc#pum#visible() ? coc#pum#confirm()
                               \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" Force CoC to refresh the completion list when you backspace
+inoremap <silent><expr> <BS> coc#pum#visible() ? "\<BS>\<C-r>=coc#refresh()\<CR>" : "\<BS>"
 nnoremap <silent> K :call CocActionAsync('doHover')<CR>
 
 "noremap <silent> <c-u> zz:call smooth_scroll#up(&scroll, 8, 2)<CR>
