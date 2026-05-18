@@ -29,7 +29,16 @@ set undofile " Persistent undo
 set guicursor=
 set smartindent
 
-set undodir=~/.vim/undo
+" Platform-specific paths
+if has('win32') || has('win64')
+    let s:vim_dir = '~/vimfiles'
+    set viminfofile=~/_viminfo
+else
+    let s:vim_dir = '~/.vim'
+    set viminfofile=~/.viminfo
+endif
+
+execute 'set undodir=' . s:vim_dir . '/undo'
 
 if has("gui_running")
     set lines=40
@@ -57,7 +66,7 @@ set backspace=indent,eol,start " backspace over everything in insert mode
 " If you don't have vim-plug: 
 " curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-call plug#begin('~/.vim/plugged')
+execute 'call plug#begin("' . s:vim_dir . '/plugged")'
     Plug 'neoclide/coc.nvim', {'branch': 'release'}
     Plug 'mbbill/undotree'
     Plug 'sheerun/vim-polyglot' 
