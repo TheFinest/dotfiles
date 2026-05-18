@@ -31,6 +31,11 @@ set smartindent
 
 set undodir=~/.vim/undo
 
+if has("gui_running")
+    set lines=40
+    set columns=100
+endif
+
 let maplocalleader = " "
 let mapleader = " "
 
@@ -144,3 +149,5 @@ let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$|node_modules|target|dist'
 nnoremap <leader>ut :UndotreeToggle<CR>
 colorscheme solarized
 set background=light
+
+

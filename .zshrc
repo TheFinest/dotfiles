@@ -158,6 +158,9 @@ PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p
 export EDITOR=vim
 export BAT_THEME="Catppuccin Latte"
 export FZF_DEFAULT_OPTS='--preview "bat --style=header,numbers --color=always --line-range :500 {}"'
+export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --strip-cwd-prefix --hidden --follow --exclude .git'
 stty -ixon
 neofetch
 
