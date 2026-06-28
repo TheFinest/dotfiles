@@ -355,9 +355,12 @@ target view, the view is restored, and a timer animates toward the target."
   :mode "\\.fs[xi]?\\'")
 
 ;; TERMINAL CLIPBOARD BRIDGE
-(use-package xclip
-  :config
-  (xclip-mode 1))
+;; Only needed on GNU/Linux where Emacs runs in a terminal without GUI
+;; clipboard access. On Windows, native clipboard integration works without it.
+(unless (system-is-windows)
+  (use-package xclip
+    :config
+    (xclip-mode 1)))
 
 ;; ========================================================================== ;;
 ;;  6. BUILT-IN LIGHTWEIGHT LSP (Eglot)
@@ -380,10 +383,7 @@ target view, the view is restored, and a timer animates toward the target."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(dashboard dirvish evil fsharp-mode inter lua-mode magit
-               scroll-on-jump smooth-scrolling solarized-theme
-               undo-fu-session vertico vundo xclip)))
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
