@@ -133,7 +133,11 @@ alias vpn='mullvad-vpn'
 alias vf='vim $(fzf)'
 #alias cf='cd $(fd --type d | fzf)' # already done by ALT-C
 alias cf='cd "$(fd --type d . ~ | fzf)"'
-alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git' 
+alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git'
+
+# Don't let anyone see this.
+alias vim='emacsclient -c -nw'
+
 # alias fman='compgen -c | fzf | xargs man' # we literally never use this...
 
 # Functions
@@ -152,6 +156,13 @@ cd() {
     builtin cd "$@" && ls;
 }
 
+mdpdf() {
+    local md_file="$1"
+    local pdf_file="${md_file%.md}.pdf"
+    pandoc "$md_file" -o "$pdf_file"
+    mupdf "$pdf_file" &
+}
+
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
 
@@ -167,4 +178,8 @@ neofetch
 unalias gp
 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64:/usr/lib"
+export PATH="$PATH:/home/thekeymaster/.dotnet/tools"
 export CUDA_HOME=/usr/local/cuda
+
+# kimi-code
+export PATH="/home/thekeymaster/.kimi-code/bin:$PATH"

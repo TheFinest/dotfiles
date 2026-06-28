@@ -74,6 +74,7 @@ execute 'call plug#begin("' . s:vim_dir . '/plugged")'
     Plug 'psliwka/vim-smoothie'
     Plug 'preservim/nerdtree'
     Plug 'ctrlpvim/ctrlp.vim'
+    Plug 'jamessan/vim-gnupg'
 call plug#end()
 
 
@@ -136,7 +137,7 @@ function! SyncToProjectRoot()
 endfunction
 
 " Trigger this whenever you open a file
-autocmd BufReadPost,BufEnter * call SyncToProjectRoot()
+"autocmd BufReadPost,BufEnter * call SyncToProjectRoot()
 
 "nnoremap <C-n> :NERDTreeToggle<CR>
 nnoremap <C-n> :execute 'NERDTreeToggle ' . getcwd()<CR>
