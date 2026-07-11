@@ -18,6 +18,8 @@
 
 ;; --- Internal state ---------------------------------------------------------
 (defvar smoothie--timer nil)
+(defvar smoothie--target-start nil)
+(defvar smoothie--target-point nil)
 (defvar smoothie--target-start-line nil)
 (defvar smoothie--target-point-line nil)
 (defvar smoothie--subline-start 0.0)
@@ -85,23 +87,16 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
   (when (timerp smoothie--timer)
     (cancel-timer smoothie--timer)
     (setq smoothie--timer nil))
-  (when (and smoothie--target-start-line smoothie--target-point-line
+  (when (and smoothie--target-start smoothie--target-point
              (eq (current-buffer) smoothie--buffer)
              (eq (selected-window) smoothie--window))
     (let ((scroll-margin 0))
-      (set-window-start
-       nil
-       (save-excursion
-         (goto-char (point-min))
-         (forward-line (1- smoothie--target-start-line))
-         (point))
-       t)
-      (goto-char (save-excursion
-                   (goto-char (point-min))
-                   (forward-line (1- smoothie--target-point-line))
-                   (point)))
+      (set-window-start nil smoothie--target-start t)
+      (goto-char smoothie--target-point)
       (redisplay t)))
-  (setq smoothie--target-start-line nil
+  (setq smoothie--target-start nil
+        smoothie--target-point nil
+        smoothie--target-start-line nil
         smoothie--target-point-line nil
         smoothie--subline-start 0.0
         smoothie--subline-point 0.0))
@@ -114,22 +109,34 @@ target view, the view is restored, and a timer animates toward the target."
   (when smoothie--timer (smoothie--finish))
   (let ((orig-start (window-start))
         (orig-point (point))
-        (target-start-line)
-        (target-point-line))
+        target-start target-point
+        target-start-line target-point-line)
     (let ((inhibit-redisplay t))
       (condition-case err
           (call-interactively command)
         (error (message "smoothie-do: %S" err)))
-      (setq target-start-line (line-number-at-pos (window-start))
-            target-point-line (line-number-at-pos (point)))
+      (setq target-start (window-start)
+            target-point (point)
+            target-start-line (line-number-at-pos target-start)
+            target-point-line (line-number-at-pos target-point))
       (set-window-start nil orig-start t)
       (goto-char orig-point))
-    (if (and (= target-start-line (line-number-at-pos orig-start))
-             (= target-point-line (line-number-at-pos orig-point)))
-        ;; Nothing to animate; re-run for real so side effects (search, etc.) land.
-        (let ((inhibit-redisplay nil))
-          (call-interactively command))
-      (setq smoothie--target-start-line target-start-line
+    (cond
+     ((and (= target-start orig-start) (= target-point orig-point))
+      ;; Nothing to animate; re-run for real so side effects (search, etc.) land.
+      (let ((inhibit-redisplay nil))
+        (call-interactively command)))
+     ((and (= target-start-line (line-number-at-pos orig-start))
+           (= target-point-line (line-number-at-pos orig-point)))
+      ;; Same lines but cursor/window moved within line: snap to exact positions.
+      (let ((scroll-margin 0))
+        (set-window-start nil target-start t)
+        (goto-char target-point)
+        (redisplay t)))
+     (t
+      (setq smoothie--target-start target-start
+            smoothie--target-point target-point
+            smoothie--target-start-line target-start-line
             smoothie--target-point-line target-point-line
             smoothie--subline-start 0.0
             smoothie--subline-point 0.0
@@ -138,7 +145,7 @@ target view, the view is restored, and a timer animates toward the target."
             smoothie--last-time (float-time))
       (setq smoothie--timer
             (run-with-timer smoothie-update-interval smoothie-update-interval
-                            #'smoothie--tick)))))
+                            #'smoothie--tick))))))
 
 ;; --- Wrapper commands (match your .vimrc: scroll then `zz` center) -----------
 (defun my/smoothie-c-d ()
