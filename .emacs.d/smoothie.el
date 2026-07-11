@@ -3,8 +3,23 @@
 ;; Recreates the velocity curve of vim-smoothie:
 ;;   velocity = sign(d) * (constant + linear * |d|^exponent)
 ;; which produces fast-then-easing-out (inertia) movement toward the target.
-
-(require 'evil)
+;;
+;; This file contains ONLY the core animation engine. It is framework-agnostic;
+;; it does not depend on evil or any other package. Use `smoothie-do' to wrap
+;; any movement command: it runs the command once, captures the resulting window
+;; and cursor positions, then animates toward them.
+;;
+;; Example (in your init, after loading evil):
+;;
+;;   (require 'smoothie)
+;;   (defun my/smoothie-c-d ()
+;;     (interactive)
+;;     (let ((scroll-margin 0)) (call-interactively #'evil-scroll-down))
+;;     (evil-scroll-line-to-center nil))
+;;   (define-key evil-normal-state-map (kbd "C-d")
+;;               (lambda (arg) (interactive "P")
+;;                 (let ((current-prefix-arg arg))
+;;                   (smoothie-do #'my/smoothie-c-d))))
 
 ;; --- User options -----------------------------------------------------------
 (defvar smoothie-update-interval 0.02
@@ -27,6 +42,26 @@
 (defvar smoothie--last-time nil)
 (defvar smoothie--buffer nil)
 (defvar smoothie--window nil)
+
+;; Hook for front-end integration. Run in the context of
+;; `smoothie--buffer' / `smoothie--window'.
+(defvar smoothie-finish-hook nil
+  "Hook run from `smoothie--finish' after the animation has settled and the
+window/cursor have been snapped to their final positions. Use this to refresh
+transient UI once the view is stable.")
+
+;; Non-nil only while `smoothie-do' is capturing a command's target position
+;; (i.e. while the wrapped command is actually executing). Front-ends may query
+;; `smoothie-active-p' to suppress transient UI that should not appear during a
+;; smoothie-driven command (e.g. evil's search flash, which would flicker as
+;; the window scrolls).
+(defvar smoothie--capturing nil)
+
+(defun smoothie-active-p ()
+  "Return non-nil while smoothie is capturing a target or animating.
+Front-ends use this to decide whether to defer transient UI (e.g. search
+highlighting) until `smoothie-finish-hook' fires."
+  (or smoothie--capturing smoothie--timer))
 
 ;; --- Core animation engine ---------------------------------------------------
 (defun smoothie--velocity (distance)
@@ -93,7 +128,9 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
     (let ((scroll-margin 0))
       (set-window-start nil smoothie--target-start t)
       (goto-char smoothie--target-point)
-      (redisplay t)))
+      (redisplay t))
+    ;; Let front-ends refresh transient UI now that the view has settled.
+    (run-hooks 'smoothie-finish-hook))
   (setq smoothie--target-start nil
         smoothie--target-point nil
         smoothie--target-start-line nil
@@ -111,7 +148,8 @@ target view, the view is restored, and a timer animates toward the target."
         (orig-point (point))
         target-start target-point
         target-start-line target-point-line)
-    (let ((inhibit-redisplay t))
+    (let ((inhibit-redisplay t)
+          (smoothie--capturing t))
       (condition-case err
           (call-interactively command)
         (error (message "smoothie-do: %S" err)))
@@ -127,13 +165,15 @@ target view, the view is restored, and a timer animates toward the target."
       (let ((inhibit-redisplay nil))
         (call-interactively command)))
      ((and (= target-start-line (line-number-at-pos orig-start))
-           (= target-point-line (line-number-at-pos orig-point)))
-      ;; Same lines but cursor/window moved within line: snap to exact positions.
-      (let ((scroll-margin 0))
-        (set-window-start nil target-start t)
-        (goto-char target-point)
-        (redisplay t)))
-     (t
+            (= target-point-line (line-number-at-pos orig-point)))
+       ;; Same lines but cursor/window moved within line: snap to exact positions.
+       (let ((scroll-margin 0))
+         (set-window-start nil target-start t)
+         (goto-char target-point)
+         (redisplay t))
+       ;; Flash was suppressed during capture; re-establish it now.
+       (run-hooks 'smoothie-finish-hook))
+      (t
       (setq smoothie--target-start target-start
             smoothie--target-point target-point
             smoothie--target-start-line target-start-line
@@ -146,52 +186,6 @@ target view, the view is restored, and a timer animates toward the target."
       (setq smoothie--timer
             (run-with-timer smoothie-update-interval smoothie-update-interval
                             #'smoothie--tick))))))
-
-;; --- Wrapper commands (match your .vimrc: scroll then `zz` center) -----------
-(defun my/smoothie-c-d ()
-  "Smooth C-d: `evil-scroll-down` then center, with scroll-margin disabled."
-  (interactive)
-  (let ((scroll-margin 0))
-    (call-interactively #'evil-scroll-down))
-  (evil-scroll-line-to-center nil))
-
-(defun my/smoothie-c-u ()
-  "Smooth C-u: `evil-scroll-up` then center, with scroll-margin disabled."
-  (interactive)
-  (let ((scroll-margin 0))
-    (call-interactively #'evil-scroll-up))
-  (evil-scroll-line-to-center nil))
-
-(defun my/smoothie-search-next ()
-  "Smooth n: `evil-search-next` then center."
-  (interactive)
-  (call-interactively #'evil-search-next)
-  (evil-scroll-line-to-center nil))
-
-(defun my/smoothie-search-previous ()
-  "Smooth N: `evil-search-previous` then center."
-  (interactive)
-  (call-interactively #'evil-search-previous)
-  (evil-scroll-line-to-center nil))
-
-;; --- Key bindings (Evil paging keys; prefix arg / count preserved) ----------
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "C-d")
-              (lambda (arg) (interactive "P")
-                (let ((current-prefix-arg arg))
-                  (smoothie-do #'my/smoothie-c-d))))
-  (define-key evil-normal-state-map (kbd "C-u")
-              (lambda (arg) (interactive "P")
-                (let ((current-prefix-arg arg))
-                  (smoothie-do #'my/smoothie-c-u))))
-  (define-key evil-normal-state-map (kbd "n")
-              (lambda (arg) (interactive "P")
-                (let ((current-prefix-arg arg))
-                  (smoothie-do #'my/smoothie-search-next))))
-  (define-key evil-normal-state-map (kbd "N")
-              (lambda (arg) (interactive "P")
-                (let ((current-prefix-arg arg))
-                  (smoothie-do #'my/smoothie-search-previous)))))
 
 (provide 'smoothie)
 ;;; smoothie.el ends here

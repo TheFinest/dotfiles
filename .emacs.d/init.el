@@ -81,9 +81,78 @@
   ;; Unifies standard y/p mechanics with system clipboard
   (setq evil-into-clipboard t)
 
-  ;; Smoothie: inertia-based smooth scrolling (extracted to its own file)
+  ;; Smoothie: inertia-based smooth scrolling (core engine; no evil dep)
   (require 'smoothie)
-  
+
+  ;; Evil's search flash (yellow all-matches + purple current-match) is driven
+  ;; by a self-rescheduling lazy-highlight loop that re-paints the current
+  ;; window region every tick. While smoothie scrolls the window that loop
+  ;; flickers. So: suppress evil's flash entirely while smoothie is active,
+  ;; then flash just the landed-on match once the animation settles (no lazy
+  ;; loop involved, so no flicker is possible).
+  (defun my/smoothie-suppress-evil-flash (orig-fun string &optional all)
+    "Skip evil's search flash while smoothie is capturing or animating."
+    (unless (smoothie-active-p)
+      (funcall orig-fun string all)))
+  (advice-add 'evil-flash-search-pattern :around
+              #'my/smoothie-suppress-evil-flash)
+
+  (defun my/smoothie-flash-current-match ()
+    "Flash just the current search match after a smoothie animation.
+Only fires when point sits on a real, non-empty match, so non-search commands
+like C-d/C-u (which carry stale or empty match-data) are ignored."
+    (let ((mb (match-beginning 0)) (me (match-end 0)))
+      (when (and (stringp isearch-string) (not (string= isearch-string ""))
+                 mb me (> me mb) (= mb (point)))
+        (evil-flash-search-pattern
+         (evil-search-message isearch-string isearch-forward) nil))))
+  (add-hook 'smoothie-finish-hook #'my/smoothie-flash-current-match)
+
+  ;; --- Smoothie wrapper commands (scroll then `zz` center) ---
+  (defun my/smoothie-c-d ()
+    "Smooth C-d: `evil-scroll-down` then center, with scroll-margin disabled."
+    (interactive)
+    (let ((scroll-margin 0))
+      (call-interactively #'evil-scroll-down))
+    (evil-scroll-line-to-center nil))
+
+  (defun my/smoothie-c-u ()
+    "Smooth C-u: `evil-scroll-up` then center, with scroll-margin disabled."
+    (interactive)
+    (let ((scroll-margin 0))
+      (call-interactively #'evil-scroll-up))
+    (evil-scroll-line-to-center nil))
+
+  (defun my/smoothie-search-next ()
+    "Smooth n: `evil-search-next` then center."
+    (interactive)
+    (call-interactively #'evil-search-next)
+    (evil-scroll-line-to-center nil))
+
+  (defun my/smoothie-search-previous ()
+    "Smooth N: `evil-search-previous` then center."
+    (interactive)
+    (call-interactively #'evil-search-previous)
+    (evil-scroll-line-to-center nil))
+
+  ;; --- Key bindings (Evil paging keys; prefix arg / count preserved) ----------
+  (define-key evil-normal-state-map (kbd "C-d")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-c-d))))
+  (define-key evil-normal-state-map (kbd "C-u")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-c-u))))
+  (define-key evil-normal-state-map (kbd "n")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-search-next))))
+  (define-key evil-normal-state-map (kbd "N")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-search-previous))))
+
   ;; Ctrl+c g -> Smart Project-Aware Magit Status
   (define-key evil-normal-state-map (kbd "C-c g") 
               (lambda () (interactive) (magit-status (or (vc-root-dir) default-directory))))
@@ -216,6 +285,8 @@
 ;; MAGIT (The Git Engine)
 (use-package magit
 
+; Auto generated stuff below...
+  
   :defer t)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
