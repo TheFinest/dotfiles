@@ -67,7 +67,6 @@ set backspace=indent,eol,start " backspace over everything in insert mode
 " curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 execute 'call plug#begin("' . s:vim_dir . '/plugged")'
-    Plug 'neoclide/coc.nvim', {'branch': 'release'}
     Plug 'mbbill/undotree'
     Plug 'sheerun/vim-polyglot' 
     "Plug 'terryma/vim-smooth-scroll'
@@ -78,27 +77,10 @@ execute 'call plug#begin("' . s:vim_dir . '/plugged")'
 call plug#end()
 
 
-inoremap <silent><expr> <TAB>
-      \ coc#pum#visible() ? coc#pum#next(1) :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
-
 function! s:check_back_space() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
-
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
-inoremap <silent><expr> <cr> coc#pum#visible() ? coc#pum#confirm()
-                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-
-" Force CoC to refresh the completion list when you backspace
-inoremap <silent><expr> <BS> coc#pum#visible() ? "\<BS>\<C-r>=coc#refresh()\<CR>" : "\<BS>"
-nnoremap <silent> K :call CocActionAsync('doHover')<CR>
 
 "noremap <silent> <c-u> zz:call smooth_scroll#up(&scroll, 8, 2)<CR>
 "noremap <silent> <c-d> zz:call smooth_scroll#down(&scroll, 8, 2)<CR>
@@ -159,5 +141,3 @@ let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$|node_modules|target|dist'
 nnoremap <leader>ut :UndotreeToggle<CR>
 colorscheme solarized
 set background=light
-
-

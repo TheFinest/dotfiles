@@ -1,0 +1,14 @@
+{
+  "languageserver": {
+    "fsharp": {
+      "command": "/home/thekeymaster/.dotnet/tools/fsautocomplete",
+      "args": ["--background-service-enabled"],
+      "filetypes": ["fsharp"],
+      "rootPatterns": [".git", "*.sln", "*.fsproj"],
+      "trace.server": "verbose",
+      "initializationOptions": {
+          "AutomaticWorkspaceInit": true
+      }
+    }
+  }
+}

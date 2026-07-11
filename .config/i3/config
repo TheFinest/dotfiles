@@ -23,6 +23,7 @@ exec xsetwacom --set "Wacom Intuos S Pen stylus" MapToOutput HEAD-0 &
 #exec picom -b &
 exec redshift -l 44:-76 -t 6500:1000 &
 exec xrandr --dpi 90 &
+exec emacs --daemon &
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
@@ -52,9 +53,10 @@ floating_modifier $alt
 # or left-clicking anywhere into the window while holding the floating modifier.
 tiling_drag modifier modifier
 
+# start emacs
+bindsym $super+e exec emacsclient -c
 # start a terminal
-bindsym $super+e exec xfce4-terminal
-bindsym $super+t exec st
+bindsym $super+t exec xfce4-terminal
 # browser
 bindsym $super+b exec firefox
 # keepass

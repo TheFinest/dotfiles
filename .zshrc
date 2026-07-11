@@ -133,10 +133,13 @@ alias vpn='mullvad-vpn'
 alias vf='vim $(fzf)'
 #alias cf='cd $(fd --type d | fzf)' # already done by ALT-C
 alias cf='cd "$(fd --type d . ~ | fzf)"'
-alias dotfiles='git --work-tree=$HOME --git-dir=$HOME/dotfiles.git'
 
 # Don't let anyone see this.
 alias vim='emacsclient -c -nw'
+
+# I sometimes forget the order, so I'm making both work, lol
+alias refreshemacs='killall emacs && emacs --daemon'
+alias emacsrefresh='killall emacs && emacs --daemon'
 
 # alias fman='compgen -c | fzf | xargs man' # we literally never use this...
 
@@ -163,10 +166,19 @@ mdpdf() {
     mupdf "$pdf_file" &
 }
 
+# Yeah this is a bit odd, but this needs to be a function
+# for the tab file expansion to use zsh's autocomplete rather
+# than slow-ass gits. This is combined with the 'compdef' line
+# at the end of this config.
+# Again, this _has_ to be a function. The compdef line for
+# some reason don't work if it's an alias.
+dotfiles() {
+    git --work-tree=$HOME --git-dir=$HOME/dotfiles.git "$@"
+}
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
 
-export EDITOR=vim
+export EDITOR='emacsclient'
 export BAT_THEME="Catppuccin Latte"
 export FZF_DEFAULT_OPTS='--preview "bat --style=header,numbers --color=always --line-range :500 {}"'
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
@@ -183,3 +195,5 @@ export CUDA_HOME=/usr/local/cuda
 
 # kimi-code
 export PATH="/home/thekeymaster/.kimi-code/bin:$PATH"
+
+compdef _files dotfiles
