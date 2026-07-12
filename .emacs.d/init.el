@@ -88,8 +88,13 @@
   ;; by a self-rescheduling lazy-highlight loop that re-paints the current
   ;; window region every tick. While smoothie scrolls the window that loop
   ;; flickers. So: suppress evil's flash entirely while smoothie is active,
-  ;; then flash just the landed-on match once the animation settles (no lazy
-  ;; loop involved, so no flicker is possible).
+  ;; then pulse just the landed-on match once the animation settles, using the
+  ;; same red fade that `gd'/`xref-find-definitions' uses.
+  (require 'pulse)
+  ;; Ensure the animated (fading) pulse branch is used. `pulse-flag' defaults to
+  ;; (pulse-available-p), which can be nil if pulse loads before the theme sets
+  ;; frame colors. Force it on since GUI frames always support pulsing.
+  (setq pulse-flag t)
   (defun my/smoothie-suppress-evil-flash (orig-fun string &optional all)
     "Skip evil's search flash while smoothie is capturing or animating."
     (unless (smoothie-active-p)
@@ -97,16 +102,14 @@
   (advice-add 'evil-flash-search-pattern :around
               #'my/smoothie-suppress-evil-flash)
 
-  (defun my/smoothie-flash-current-match ()
-    "Flash just the current search match after a smoothie animation.
+  (defun my/smoothie-pulse-current-match ()
+    "Pulse the current search match (red fade) after a smoothie animation.
 Only fires when point sits on a real, non-empty match, so non-search commands
 like C-d/C-u (which carry stale or empty match-data) are ignored."
     (let ((mb (match-beginning 0)) (me (match-end 0)))
-      (when (and (stringp isearch-string) (not (string= isearch-string ""))
-                 mb me (> me mb) (= mb (point)))
-        (evil-flash-search-pattern
-         (evil-search-message isearch-string isearch-forward) nil))))
-  (add-hook 'smoothie-finish-hook #'my/smoothie-flash-current-match)
+      (when (and mb me (> me mb) (= mb (point)))
+        (pulse-momentary-highlight-region mb me 'next-error))))
+  (add-hook 'smoothie-finish-hook #'my/smoothie-pulse-current-match)
 
   ;; --- Smoothie wrapper commands (scroll then `zz` center) ---
   (defun my/smoothie-c-d ()
