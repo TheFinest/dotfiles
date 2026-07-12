@@ -4,6 +4,12 @@
 ; C-h k <KEY> (for keybinding info)
 ; C-h m (mode info)
 ; C-h i (generic info page, all the info!)
+;
+; C-x p f	project-find-file	Fuzzy find any file in the current project instantly.
+; C-x p p	project-switch-project	Teleport to a different project from your history.
+; C-x p g	project-find-regexp	Search for code inside every file in the project (uses ripgrep/grep).
+; C-x p D	project-dired	Open a file manager (Dired) scoped directly to the root of the project.
+; C-x p eshell	project-eshell	Spawn a terminal wrapper natively inside that project's directory.
 
 (setq load-prefer-newer t) ; Prefer .el files over .elc files when loading configs (i.e. favour recompiling this config file over using stale caches of it)
 
@@ -50,9 +56,13 @@
 (eval-when-compile (require 'use-package))
 (setq use-package-always-ensure t) ; Automatically downloads plugins when needed
 
+(setq read-file-name-completion-ignore-case t)
+
 ;; Theme Selection (Matches your solarized theme preference)
 (use-package solarized-theme
   :config (load-theme 'solarized-light t))
+
+(setq initial-scratch-message nil)
 
 ;; PERSISTENT UNDO (Equivalent to Vim's set undofile)
 (use-package undo-fu-session
@@ -133,6 +143,20 @@ match-data can be clobbered by font-lock during a long scroll animation.")
       (call-interactively #'evil-scroll-up))
     (evil-scroll-line-to-center nil))
 
+  (defun my/smoothie-page-down ()
+    "Smooth Page Down: `evil-scroll-page-down` then center, with scroll-margin disabled."
+    (interactive)
+    (let ((scroll-margin 0))
+      (call-interactively #'evil-scroll-page-down))
+    (evil-scroll-line-to-center nil))
+
+  (defun my/smoothie-page-up()
+    "Smooth Page Up: `evil-scroll-page-up` then center, with scroll-margin disabled."
+    (interactive)
+    (let ((scroll-margin 0))
+      (call-interactively #'evil-scroll-page-up))
+    (evil-scroll-line-to-center nil))
+
   (defun my/smoothie-search-next ()
     "Smooth n: `evil-search-next` then center."
     (interactive)
@@ -156,6 +180,26 @@ match-data can be clobbered by font-lock during a long scroll animation.")
               (lambda (arg) (interactive "P")
                 (let ((current-prefix-arg arg))
                   (smoothie-do #'my/smoothie-c-u))))
+  (define-key evil-normal-state-map (kbd "C-S-d")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg)
+                      (evil-scroll-count 10))
+                  (smoothie-do #'my/smoothie-c-d))))
+  (define-key evil-normal-state-map (kbd "C-S-u")
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg)
+                      (evil-scroll-count 10))
+                  (smoothie-do #'my/smoothie-c-u))))
+
+  (define-key evil-normal-state-map (kbd "<next>") ; Page down
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-page-down))))
+  (define-key evil-normal-state-map (kbd "<prior>") ; Page up
+              (lambda (arg) (interactive "P")
+                (let ((current-prefix-arg arg))
+                  (smoothie-do #'my/smoothie-page-up))))
+
   (define-key evil-normal-state-map (kbd "n")
               (lambda (arg) (interactive "P")
                 (let ((current-prefix-arg arg))
@@ -173,7 +217,13 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (define-key evil-normal-state-map (kbd "C-c u") 'vundo)
 
   ;; Ctrl+c f -> Sidebar Project File Tree
-  (define-key evil-normal-state-map (kbd "C-c f") 'dired-sidebar-toggle-sidebar))
+  (define-key evil-normal-state-map (kbd "C-c t") 'dired-sidebar-toggle-sidebar)
+
+    ;; Fast Travel: Mnemonic "b" for Bookmark
+    (define-key evil-normal-state-map (kbd "C-c b b") #'bookmark-jump)  ; "Bookmark: Bookmarked locations"
+    (define-key evil-normal-state-map (kbd "C-c b m") #'bookmark-set)   ; "Bookmark: Mark this location"
+    (define-key evil-normal-state-map (kbd "C-c b l") #'bookmark-bmenu-list) ; "Bookmark: List all"
+)
 
 (use-package evil-collection
   :ensure t
@@ -182,10 +232,17 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (evil-collection-init)
 
   (evil-define-key 'normal dired-mode-map
-    (kbd "h") 'dired-up-directory ;'h' goes back/up a directory
-    (kbd "l") 'dired-find-file)) ;'f' opens/goes into a directory
+    (kbd "h") 'dired-up-directory ; 'h' goes back/up a directory
+    (kbd "<backspace>") 'dired-up-directory ; Backspace also goes back/up
+    (kbd "DEL") 'dired-up-directory ; Backspace alternative (not the delete key... for some reason?)
+    (kbd "l") 'dired-find-file) ; 'f' opens/goes into a directory
 
-;; NATIVE TREE-SITTER SETUP (Emacs 29+)
+  (evil-define-key 'normal vundo-mode-map
+    (kbd "C-c u") 'vundo-quit
+    (kbd "<escape>") 'vundo-quit)
+)
+
+
 (use-package treesit
   :ensure nil ; Built-in to Emacs 29+
   :config
@@ -211,42 +268,70 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   :ensure t
   :commands (dired-sidebar-toggle-sidebar))
 
+;(defun post-text-scale-callback ()
+;  ;; fix line number text size
+;  (let ((new-size (floor (* (face-attribute 'default :height)
+;                            (expt text-scale-mode-step text-scale-mode-amount)))))
+;    (set-face-attribute 'line-number nil :height new-size)
+;    (set-face-attribute 'line-number-current-line nil :height new-size)))
+
+;(add-hook 'text-scale-mode-hook 'post-text-scale-callback)
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic)))
+
+(use-package consult-dir
+  :ensure t
+  :bind ("C-x C-d" . consult-dir)) ;; Bind it globally
+
 ;; CITRE SETUP (Modern Universal Ctags Frontend)
-(use-package citre
-  :ensure t
-  :defer t
-  :init
-  ;; Bind Citre's powerful navigation keys globally
-  (global-set-key (kbd "M-.") #'citre-jump)
-  (global-set-key (kbd "M-,") #'citre-jump-back)
-  (global-set-key (kbd "M-?") #'citre-peek)
-  
-  :config
-  ;; Tie Citre directly to Emacs' standard cross-reference (xref) system
-  (require 'citre-config)
-  
-  ;; Tell Citre where to find your Universal Ctags binary if it's not in PATH
-  ;; (setq citre-ctags-program "/usr/local/bin/ctags") 
-  
-  ;; Highlight the line you jump to briefly so you don't lose your cursor
-  (setq citre-peek-fill-fringe t))
+;(use-package citre(global-set-key (kbd "C-x p f") 'project-find-file)
+;  :ensure t
+;  :defer t
+;  :init
+;  ;; Bind Citre's powerful navigation keys globally
+;  (global-set-key (kbd "M-.") #'citre-jump)
+;  (global-set-key (kbd "M-,") #'citre-jump-back)
+;  (global-set-key (kbd "M-?") #'citre-peek)
+;  
+;  :config
+;  ;; Tie Citre directly to Emacs' standard cross-reference (xref) system
+;  (require 'citre-config)
+;  
+;  ;; Tell Citre where to find your Universal Ctags binary if it's not in PATH
+;  ;; (setq citre-ctags-program "/usr/local/bin/ctags") 
+;  
+;  ;; Highlight the line you jump to briefly so you don't lose your cursor
+;  (setq citre-peek-fill-fringe t))
 
-
-;; EXTENSIBLE STARTUP DASHBOARD
-(use-package dashboard
+(use-package consult
   :ensure t
   :config
+  ;; Limits the search to the current directory and exactly 1 level down
+(setq consult-find-args "find . -maxdepth 3"))
 
-  ;; Configure Dashboard Banner & Titles
-  (setq dashboard-banner-logo-title "Welcome to Emacs")
-  (setq dashboard-startup-banner 'official)
-  
-  ;; Choose what items appear on your landing screen
-  (setq dashboard-items '((recents  . 5)
-                          (projects . 5))))
+(defun my/consult-find-one-level-up ()
+  "Search files starting from the parent directory, max 3 levels deep."
+  (interactive)
+  (let ((default-directory (expand-file-name ".." default-directory)))
+    (consult-find)))
+
+(global-set-key (kbd "C-c f") #'my/consult-find-one-level-up)
 
 (use-package vundo
-  :defer t)
+  :defer t
+  :config
+  (setq vundo-glyph-alist vundo-unicode-symbols)
+  (defun my/vundo-live-diff-refresh ()
+    "Automatically update the vundo diff buffer on cursor movement."
+    (when (derived-mode-p 'vundo-mode)
+      ;; ignore errors if we are on the very first node (no parent to diff against)
+      (ignore-errors (vundo-diff))))
+
+  (add-hook 'post-command-hook #'my/vundo-live-diff-refresh))
+  )
 
 ;; FAST SELECTIVE MENUS (Alternative to Ctrl-P)
 (use-package vertico
@@ -267,6 +352,7 @@ match-data can be clobbered by font-lock during a long scroll animation.")
       (let ((default-directory default-directory))
         (find-file)))))
 
+
 ;; GENERIC LANGUAGE EXTENSIONS FOR SYNTAX HIGHLIGHTING
 (use-package lua-mode
   :defer t
@@ -274,10 +360,12 @@ match-data can be clobbered by font-lock during a long scroll animation.")
 
 (use-package fsharp-mode
   :defer t
-  :mode "\\.fs[xi]?\\'")
+  :mode "\\.fs[xi]?\\'"
+  :config
+  ;; Ensure project.el is loaded, then remove the F# root-finding interference
+  (with-eval-after-load 'project
+    (setq project-find-functions (delq 'fsharp-mode-project-root project-find-functions))))
 
-;; TERMINAL CLIPBOARD BRIDGE
-;; Only needed on GNU/Linux where Emacs runs in a terminal without GUI
 ;; clipboard access. On Windows, native clipboard integration works without it.
 (unless (system-is-windows)
   (use-package xclip
@@ -296,10 +384,11 @@ match-data can be clobbered by font-lock during a long scroll animation.")
 
 ;; MAGIT (The Git Engine)
 (use-package magit
+  :defer t)
 
 ; Auto generated stuff below...
+; ============================
   
-  :defer t)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

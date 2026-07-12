@@ -138,8 +138,8 @@ alias cf='cd "$(fd --type d . ~ | fzf)"'
 alias vim='emacsclient -c -nw'
 
 # I sometimes forget the order, so I'm making both work, lol
-alias refreshemacs='killall emacs && emacs --daemon'
-alias emacsrefresh='killall emacs && emacs --daemon'
+alias refreshemacs='killall -w emacs && emacs --daemon'
+alias emacsrefresh='killall -w emacs && emacs --daemon'
 
 # alias fman='compgen -c | fzf | xargs man' # we literally never use this...
 
