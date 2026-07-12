@@ -305,21 +305,6 @@ match-data can be clobbered by font-lock during a long scroll animation.")
 (use-package consult
   :ensure t
   :config
-  ;; Limits the search to the current directory and exactly 1 level down
-(setq consult-find-args "find . -maxdepth 3"))
-
-(defun my/consult-find-one-level-up ()
-  "Search files starting from the parent directory, max 3 levels deep."
-  (interactive)
-  (let ((default-directory (expand-file-name ".." default-directory)))
-    (consult-find)))
-
-(global-set-key (kbd "C-c f") #'my/consult-find-one-level-up)
-
-
-(use-package consult
-  :ensure t
-  :config
   ;; Global default fallback
   (setq consult-find-args "find . -maxdepth 3"))
 
