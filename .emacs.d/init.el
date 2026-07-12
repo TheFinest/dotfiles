@@ -104,14 +104,21 @@
 
   (defun my/smoothie-pulse-current-match ()
     "Pulse the current search match (red fade) after a smoothie animation.
-Only fires when point sits on a real, non-empty match, so non-search commands
-like C-d/C-u (which carry stale or empty match-data) are ignored."
-    (let ((mb (match-beginning 0)) (me (match-end 0)))
-      (when (and mb me (> me mb) (= mb (point)))
-        (pulse-momentary-highlight-region mb me 'next-error))))
+Uses match bounds captured by the search wrapper (not live match-data, which
+can be clobbered by font-lock during a long scroll animation)."
+    (when my/smoothie-last-match
+      (pulse-momentary-highlight-region
+       (car my/smoothie-last-match)
+       (cdr my/smoothie-last-match)
+       'next-error)))
   (add-hook 'smoothie-finish-hook #'my/smoothie-pulse-current-match)
 
   ;; --- Smoothie wrapper commands (scroll then `zz` center) ---
+  (defvar my/smoothie-last-match nil
+    "Cons (BEG . END) of the last search match, captured right after the
+search command runs (when match-data is fresh). Used by the pulse hook, since
+match-data can be clobbered by font-lock during a long scroll animation.")
+
   (defun my/smoothie-c-d ()
     "Smooth C-d: `evil-scroll-down` then center, with scroll-margin disabled."
     (interactive)
@@ -130,13 +137,15 @@ like C-d/C-u (which carry stale or empty match-data) are ignored."
     "Smooth n: `evil-search-next` then center."
     (interactive)
     (call-interactively #'evil-search-next)
-    (evil-scroll-line-to-center nil))
+    (evil-scroll-line-to-center nil)
+    (setq my/smoothie-last-match (cons (match-beginning 0) (match-end 0))))
 
   (defun my/smoothie-search-previous ()
     "Smooth N: `evil-search-previous` then center."
     (interactive)
     (call-interactively #'evil-search-previous)
-    (evil-scroll-line-to-center nil))
+    (evil-scroll-line-to-center nil)
+    (setq my/smoothie-last-match (cons (match-beginning 0) (match-end 0))))
 
   ;; --- Key bindings (Evil paging keys; prefix arg / count preserved) ----------
   (define-key evil-normal-state-map (kbd "C-d")

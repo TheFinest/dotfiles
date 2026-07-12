@@ -138,12 +138,28 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
         smoothie--subline-start 0.0
         smoothie--subline-point 0.0))
 
+(defun smoothie--cancel ()
+  "Cancel any running animation without snapping or running finish hooks.
+Used when a new command supersedes an in-progress animation: the previous
+animation's target is irrelevant, so we just tear down its state cleanly
+without firing `smoothie-finish-hook' (which would e.g. pulse the wrong
+match at the wrong time)."
+  (when (timerp smoothie--timer)
+    (cancel-timer smoothie--timer)
+    (setq smoothie--timer nil))
+  (setq smoothie--target-start nil
+        smoothie--target-point nil
+        smoothie--target-start-line nil
+        smoothie--target-point-line nil
+        smoothie--subline-start 0.0
+        smoothie--subline-point 0.0))
+
 (defun smoothie-do (command)
   "Execute COMMAND interactively, then animate to its resulting position.
 Mirrors vim-smoothie's `smoothie#do': the command is run once to capture the
 target view, the view is restored, and a timer animates toward the target."
   (interactive)
-  (when smoothie--timer (smoothie--finish))
+  (when smoothie--timer (smoothie--cancel))
   (let ((orig-start (window-start))
         (orig-point (point))
         target-start target-point
