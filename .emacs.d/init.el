@@ -282,10 +282,6 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   :custom
   (completion-styles '(orderless basic)))
 
-(use-package consult-dir
-  :ensure t
-  :bind ("C-x C-d" . consult-dir)) ;; Bind it globally
-
 ;; CITRE SETUP (Modern Universal Ctags Frontend)
 ;(use-package citre(global-set-key (kbd "C-x p f") 'project-find-file)
 ;  :ensure t
@@ -320,6 +316,34 @@ match-data can be clobbered by font-lock during a long scroll animation.")
 
 (global-set-key (kbd "C-c f") #'my/consult-find-one-level-up)
 
+
+(use-package consult
+  :ensure t
+  :config
+  ;; Global default fallback
+  (setq consult-find-args "find . -maxdepth 3"))
+
+(defun my/consult-find-project-or-up ()
+  "Search files starting from the project root (infinite depth) if it exists, 
+otherwise start from the parent directory, max 3 levels deep."
+  (interactive)
+  (let ((proj (project-current)))
+    (if proj
+        ;; If in a project, remove the depth limit (-maxdepth) completely
+        (let ((default-directory (project-root proj))
+              (consult-find-args "find .")) ; Overrides the global -maxdepth 3
+          (consult-find))
+      ;; Fallback: Go up one level and use the global 3-level depth limit
+      (let ((default-directory (expand-file-name ".." default-directory)))
+        (consult-find)))))
+
+(use-package vertico
+  :init
+  (vertico-mode 1)
+  :config
+  (with-eval-after-load 'evil
+    (define-key evil-normal-state-map (kbd "C-p") #'my/consult-find-project-or-up)))
+
 (use-package vundo
   :defer t
   :config
@@ -330,28 +354,8 @@ match-data can be clobbered by font-lock during a long scroll animation.")
       ;; ignore errors if we are on the very first node (no parent to diff against)
       (ignore-errors (vundo-diff))))
 
-  (add-hook 'post-command-hook #'my/vundo-live-diff-refresh))
+  (add-hook 'post-command-hook #'my/vundo-live-diff-refresh)
   )
-
-;; FAST SELECTIVE MENUS (Alternative to Ctrl-P)
-(use-package vertico
-  :init
-  (vertico-mode 1)
-  :config
-  (with-eval-after-load 'evil
-    ;; Bind Ctrl+p to find ANY file recursively from your current directory (fzf style!)
-    (define-key evil-normal-state-map (kbd "C-p") 'find-file-in-project-or-dir)
-    ;; Bind Ctrl+Shift+p to find a file ANYWHERE on your system via a standard prompt
-    (define-key evil-normal-state-map (kbd "C-P") 'find-file))
-  :init
-  (defun find-file-in-project-or-dir ()
-    "If inside a Git repo, fuzzy find files in it. Otherwise, fuzzy find from the current directory."
-    (interactive)
-    (if (vc-root-dir)
-        (project-find-file)
-      (let ((default-directory default-directory))
-        (find-file)))))
-
 
 ;; GENERIC LANGUAGE EXTENSIONS FOR SYNTAX HIGHLIGHTING
 (use-package lua-mode
