@@ -1,15 +1,17 @@
-; Some useful emacs info (because I'm a n00b)
-; C-h v (for variable info)
-; C-h f (for function info)
-; C-h k <KEY> (for keybinding info)
-; C-h m (mode info)
-; C-h i (generic info page, all the info!)
-;
-; C-x p f	project-find-file	Fuzzy find any file in the current project instantly.
-; C-x p p	project-switch-project	Teleport to a different project from your history.
-; C-x p g	project-find-regexp	Search for code inside every file in the project (uses ripgrep/grep).
-; C-x p D	project-dired	Open a file manager (Dired) scoped directly to the root of the project.
-; C-x p eshell	project-eshell	Spawn a terminal wrapper natively inside that project's directory.
+;;; Some useful emacs info (because I'm a n00b)
+;;; C-h v (for variable info)
+;;; C-h f (for function info)
+;;; C-h k <KEY> (for keybinding info)
+;;; C-h m (mode info)
+;;; C-h i (generic info page, all the info!)
+;;;
+;;; C-x p f	project-find-file	Fuzzy find any file in the current project instantly.
+;;; C-x p p	project-switch-project	Teleport to a different project from your history.
+;;; C-x p g	project-find-regexp	Search for code inside every file in the project (uses ripgrep/grep).
+;;; C-x p D	project-dired	Open a file manager (Dired) scoped directly to the root of the project.
+;;; C-x p eshell	project-eshell	Spawn a terminal wrapper natively inside that project's directory.
+;;;
+;;; C-x j dired  Just opens up a dired buffer right where you are
 
 (setq load-prefer-newer t) ; Prefer .el files over .elc files when loading configs (i.e. favour recompiling this config file over using stale caches of it)
 
@@ -329,6 +331,22 @@ otherwise start from the parent directory, max 3 levels deep."
   (with-eval-after-load 'evil
     (define-key evil-normal-state-map (kbd "C-p") #'my/consult-find-project-or-up)))
 
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+
 (use-package vundo
   :defer t
   :config
@@ -341,6 +359,23 @@ otherwise start from the parent directory, max 3 levels deep."
 
   (add-hook 'post-command-hook #'my/vundo-live-diff-refresh)
   )
+
+(use-package gptel
+  :config
+  ;; Define OpenRouter as a backend
+  (setq gptel-backend
+        (gptel-make-openai "OpenRouter"
+          :host "openrouter.ai"
+          :endpoint "/api/v1/chat/completions"
+          :stream t
+           :key (lambda ()
+                  (gptel-api-key-from-auth-source "openrouter.ai" "apikey"))
+           :models '(openai/gpt-5.6-luna-pro
+                     openai/gpt-5.6-luna
+                    deepseek/deepseek-v4-flash)))
+
+  ;; Enable tool execution / agent mode
+  (setq gptel-expert-commands t))
 
 ;; GENERIC LANGUAGE EXTENSIONS FOR SYNTAX HIGHLIGHTING
 (use-package lua-mode
@@ -383,6 +418,7 @@ otherwise start from the parent directory, max 3 levels deep."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(gptel-confirm-tool-calls nil)
  '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

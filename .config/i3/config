@@ -24,6 +24,7 @@ exec xsetwacom --set "Wacom Intuos S Pen stylus" MapToOutput HEAD-0 &
 exec redshift -l 44:-76 -t 6500:1000 &
 exec xrandr --dpi 90 &
 exec emacs --daemon &
+exec_always --no-startup-id setxkbmap -layout us -variant basic
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
@@ -61,6 +62,8 @@ bindsym $super+t exec xfce4-terminal
 bindsym $super+b exec firefox
 # keepass
 bindsym $super+k exec keepass
+# goose 
+bindsym $super+g exec flatpak run io.github.block.Goose 
 
 # kill focused window
 bindsym $alt+F4 kill

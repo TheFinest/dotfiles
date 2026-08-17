@@ -114,7 +114,7 @@ source /usr/share/fzf/key-bindings.zsh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # Aliases
-alias nas="sshfs thegatekeeper@10.0.0.162:Server/ Server/ -o reconnect,default_permissions,allow_other" 
+alias nas="sshfs thegatekeeper@10.0.0.162:Server/ Server/ -o reconnect,default_permissions,allow_other,no_contain_symlinks" 
 alias mulitplesound="pacmd load-module module-combine-sink"
 alias midi="sudo aconnect -i"
 #alias anki="/home/thekeymaster/Git/anki/run > /dev/null" 
@@ -166,6 +166,28 @@ mdpdf() {
     mupdf "$pdf_file" &
 }
 
+ask() {
+  local model="${OPENROUTER_MODEL:-openai/gpt-5.6-luna-pro}"
+  local prompt="$*"
+
+  if [ -z "$OPENROUTER_API_KEY" ]; then
+    echo "Error: OPENROUTER_API_KEY is not set." >&2
+    return 1
+  fi
+
+  echo "Thinking..."
+  # Read from stdin if no arguments were provided
+  if [ -z "$prompt" ]; then
+    prompt=$(cat)
+  fi
+
+  curl -s https://openrouter.ai/api/v1/chat/completions \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg m "$model" --arg p "$prompt" '{model: $m, messages: [{role: "user", content: $p}]}')" \
+    | jq -r '.choices[0].message.content // .error.message'
+}
+
 # Yeah this is a bit odd, but this needs to be a function
 # for the tab file expansion to use zsh's autocomplete rather
 # than slow-ass gits. This is combined with the 'compdef' line
@@ -173,7 +195,7 @@ mdpdf() {
 # Again, this _has_ to be a function. The compdef line for
 # some reason don't work if it's an alias.
 dotfiles() {
-    git --work-tree=$HOME --git-dir=$HOME/dotfiles.git "$@"
+    command git --work-tree=$HOME --git-dir=$HOME/dotfiles.git "$@"
 }
 
 PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n)%{%b%F{green}%} [%D{%I:%M %p}] %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%{$fg_bold[green]%}>%{$reset_color%} '
@@ -197,3 +219,5 @@ export CUDA_HOME=/usr/local/cuda
 export PATH="/home/thekeymaster/.kimi-code/bin:$PATH"
 
 compdef _files dotfiles
+
+[ -f ~/.secrets ] && source ~/.secrets
