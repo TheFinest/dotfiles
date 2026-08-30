@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: nil; -*-
 ;;; Some useful emacs info (because I'm a n00b)
 ;;; C-h v (for variable info)
 ;;; C-h f (for function info)
@@ -40,9 +41,6 @@
 
 (setq scroll-preserve-screen-position t) ; Keeps cursor at the same relative screen line when jumping
 (setq scroll-conservatively 101)          ; Tells Emacs to NEVER violently auto-recenter the page
-
-;; Allow local files (e.g. smoothie.el) to be `require'd
-(add-to-list 'load-path user-emacs-directory)
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -284,26 +282,6 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   :custom
   (completion-styles '(orderless basic)))
 
-;; CITRE SETUP (Modern Universal Ctags Frontend)
-;(use-package citre(global-set-key (kbd "C-x p f") 'project-find-file)
-;  :ensure t
-;  :defer t
-;  :init
-;  ;; Bind Citre's powerful navigation keys globally
-;  (global-set-key (kbd "M-.") #'citre-jump)
-;  (global-set-key (kbd "M-,") #'citre-jump-back)
-;  (global-set-key (kbd "M-?") #'citre-peek)
-;  
-;  :config
-;  ;; Tie Citre directly to Emacs' standard cross-reference (xref) system
-;  (require 'citre-config)
-;  
-;  ;; Tell Citre where to find your Universal Ctags binary if it's not in PATH
-;  ;; (setq citre-ctags-program "/usr/local/bin/ctags") 
-;  
-;  ;; Highlight the line you jump to briefly so you don't lose your cursor
-;  (setq citre-peek-fill-fringe t))
-
 (use-package consult
   :ensure t
   :config
@@ -396,15 +374,31 @@ otherwise start from the parent directory, max 3 levels deep."
     :config
     (xclip-mode 1)))
 
-(use-package eglot
-  :ensure nil ; Built-in feature, do not download external
-  :hook
-  ((prog-mode . eglot-ensure)) ; Turn on LSP when entering code files
-  :config
-  (with-eval-after-load 'evil
-    (define-key evil-normal-state-map (kbd "gd") 'xref-find-definitions)
-    (define-key evil-normal-state-map (kbd "gr") 'xref-find-references)
-    (define-key evil-normal-state-map (kbd "K")  'eldoc)))
+(use-package dumb-jump
+  :ensure t)
+
+(use-package lsp-mode
+  :ensure t
+  :defer t)
+
+(defun my/evil-goto-definition ()
+  "Use LSP for definitions, falling back to Dumb Jump."
+  (interactive)
+  (if (and (bound-and-true-p lsp-mode)
+           (fboundp 'lsp-workspaces)
+           (fboundp 'lsp-find-definition)
+           (lsp-workspaces))
+      (condition-case _error
+          (call-interactively #'lsp-find-definition)
+        (error
+         (message "LSP lookup failed; trying Dumb Jump")
+         (call-interactively #'dumb-jump-go)))
+    (call-interactively #'dumb-jump-go)))
+
+(with-eval-after-load 'evil
+  (define-key evil-normal-state-map
+              (kbd "g d")
+              #'my/evil-goto-definition))
 
 ;; MAGIT (The Git Engine)
 (use-package magit
