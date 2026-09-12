@@ -240,8 +240,9 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (evil-define-key 'normal vundo-mode-map
     (kbd "C-c u") 'vundo-quit
     (kbd "<escape>") 'vundo-quit)
-)
+  )
 
+(add-hook 'dired-mode-hook #'dired-hide-details-mode)
 
 (use-package treesit
   :ensure nil ; Built-in to Emacs 29+
