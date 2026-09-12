@@ -37,6 +37,8 @@
 (defvar smoothie--target-point nil)
 (defvar smoothie--target-start-line nil)
 (defvar smoothie--target-point-line nil)
+(defvar smoothie--current-start-line nil)
+(defvar smoothie--current-point-line nil)
 (defvar smoothie--subline-start 0.0)
 (defvar smoothie--subline-point 0.0)
 (defvar smoothie--last-time nil)
@@ -72,6 +74,12 @@ highlighting) until `smoothie-finish-hook' fires."
                               smoothie-speed-exponentiation-factor)))))
     (if (< distance 0) (- abs-speed) abs-speed)))
 
+(defun smoothie--sign (number)
+  "Return -1, 0, or 1 for NUMBER."
+  (cond ((< number 0) -1)
+        ((> number 0) 1)
+        (t 0)))
+
 (defun smoothie--move-element (distance subline-var)
   "Return (INTEGER-STEP . NEW-SUBLINE) for one axis given DISTANCE.
 DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
@@ -100,8 +108,10 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
       (if (or (not (eq (current-buffer) smoothie--buffer))
               (not (eq (selected-window) smoothie--window)))
           (smoothie--finish)
-        (let ((cur-start-line (line-number-at-pos (window-start)))
-              (cur-point-line (line-number-at-pos (point))))
+        (let ((cur-start-line (or smoothie--current-start-line
+                                  (line-number-at-pos (window-start))))
+              (cur-point-line (or smoothie--current-point-line
+                                  (line-number-at-pos (point)))))
           (let ((dist-start (- smoothie--target-start-line cur-start-line))
                 (dist-point (- smoothie--target-point-line cur-point-line)))
             (if (and (= dist-start 0) (= dist-point 0))
@@ -112,7 +122,9 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
                       smoothie--subline-point (cdr p))
                 (let ((scroll-margin 0))
                   (smoothie--apply-step (car s) (car p))
-                  (redisplay t)))))))
+                  (setq smoothie--current-start-line (+ cur-start-line (car s))
+                        smoothie--current-point-line (+ cur-point-line (car p)))
+                  (redisplay)))))))
     (error
      (message "smoothie error: %S" err)
      (smoothie--finish))))
@@ -135,6 +147,8 @@ DISTANCE is remaining lines; SUBLINE-VAR is the carried fractional remainder."
         smoothie--target-point nil
         smoothie--target-start-line nil
         smoothie--target-point-line nil
+        smoothie--current-start-line nil
+        smoothie--current-point-line nil
         smoothie--subline-start 0.0
         smoothie--subline-point 0.0))
 
@@ -151,6 +165,8 @@ match at the wrong time)."
         smoothie--target-point nil
         smoothie--target-start-line nil
         smoothie--target-point-line nil
+        smoothie--current-start-line nil
+        smoothie--current-point-line nil
         smoothie--subline-start 0.0
         smoothie--subline-point 0.0))
 
@@ -159,11 +175,18 @@ match at the wrong time)."
 Mirrors vim-smoothie's `smoothie#do': the command is run once to capture the
 target view, the view is restored, and a timer animates toward the target."
   (interactive)
-  (when smoothie--timer (smoothie--cancel))
   (let ((orig-start (window-start))
         (orig-point (point))
         target-start target-point
-        target-start-line target-point-line)
+        target-start-line target-point-line
+        (old-target-start-line smoothie--target-start-line)
+        (old-target-point-line smoothie--target-point-line)
+        (was-animating nil))
+    (when (and (timerp smoothie--timer)
+               (or (not (eq (current-buffer) smoothie--buffer))
+                   (not (eq (selected-window) smoothie--window))))
+      (smoothie--cancel))
+    (setq was-animating (timerp smoothie--timer))
     (let ((inhibit-redisplay t)
           (smoothie--capturing t))
       (condition-case err
@@ -178,6 +201,8 @@ target view, the view is restored, and a timer animates toward the target."
     (cond
      ((and (= target-start orig-start) (= target-point orig-point))
       ;; Nothing to animate; re-run for real so side effects (search, etc.) land.
+      (when was-animating
+        (smoothie--cancel))
       (let ((inhibit-redisplay nil))
         (call-interactively command)))
      ((and (= target-start-line (line-number-at-pos orig-start))
@@ -187,21 +212,38 @@ target view, the view is restored, and a timer animates toward the target."
          (set-window-start nil target-start t)
          (goto-char target-point)
          (redisplay t))
-       ;; Flash was suppressed during capture; re-establish it now.
+      ;; Flash was suppressed during capture; re-establish it now.
+       (when was-animating
+         (smoothie--cancel))
        (run-hooks 'smoothie-finish-hook))
       (t
       (setq smoothie--target-start target-start
             smoothie--target-point target-point
             smoothie--target-start-line target-start-line
             smoothie--target-point-line target-point-line
-            smoothie--subline-start 0.0
-            smoothie--subline-point 0.0
             smoothie--buffer (current-buffer)
             smoothie--window (selected-window)
             smoothie--last-time (float-time))
-      (setq smoothie--timer
-            (run-with-timer smoothie-update-interval smoothie-update-interval
-                            #'smoothie--tick))))))
+      ;; Keep an existing timer alive when another scroll command arrives.
+      ;; This makes held/repeated C-u/C-d input retarget the current animation
+      ;; instead of repeatedly starting from rest.
+      (when (or (not was-animating)
+                (and old-target-start-line
+                     (/= (smoothie--sign (- old-target-start-line (line-number-at-pos orig-start)))
+                         (smoothie--sign (- target-start-line (line-number-at-pos orig-start))))))
+        (setq smoothie--subline-start 0.0))
+      (when (or (not was-animating)
+                (and old-target-point-line
+                     (/= (smoothie--sign (- old-target-point-line (line-number-at-pos orig-point)))
+                         (smoothie--sign (- target-point-line (line-number-at-pos orig-point))))))
+        (setq smoothie--subline-point 0.0))
+      (unless was-animating
+        (setq smoothie--current-start-line (line-number-at-pos orig-start)
+              smoothie--current-point-line (line-number-at-pos orig-point)))
+      (unless (timerp smoothie--timer)
+        (setq smoothie--timer
+              (run-with-timer smoothie-update-interval smoothie-update-interval
+                              #'smoothie--tick)))))))
 
 (provide 'smoothie)
 ;;; smoothie.el ends here

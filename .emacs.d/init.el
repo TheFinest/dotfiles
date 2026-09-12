@@ -116,22 +116,33 @@
     "Pulse the current search match (red fade) after a smoothie animation.
 Uses match bounds captured by the search wrapper (not live match-data, which
 can be clobbered by font-lock during a long scroll animation)."
-    (when my/smoothie-last-match
-      (pulse-momentary-highlight-region
-       (car my/smoothie-last-match)
-       (cdr my/smoothie-last-match)
-       'next-error)))
+    (when (and my/smoothie-last-match
+               (eq (nth 0 my/smoothie-last-match) (current-buffer))
+               (eq (nth 1 my/smoothie-last-match) (selected-window)))
+      (let ((beg (nth 2 my/smoothie-last-match))
+            (end (nth 3 my/smoothie-last-match)))
+        (setq my/smoothie-last-match nil)
+        (when (and (integer-or-marker-p beg)
+                   (integer-or-marker-p end)
+                   (<= beg end)
+                   (<= end (point-max)))
+          (pulse-momentary-highlight-region beg end 'next-error)))))
   (add-hook 'smoothie-finish-hook #'my/smoothie-pulse-current-match)
 
   ;; --- Smoothie wrapper commands (scroll then `zz` center) ---
   (defvar my/smoothie-last-match nil
-    "Cons (BEG . END) of the last search match, captured right after the
-search command runs (when match-data is fresh). Used by the pulse hook, since
-match-data can be clobbered by font-lock during a long scroll animation.")
+    "Pending search match for the current smoothie animation.
+The value is (BUFFER WINDOW BEG END), so an old search cannot pulse an
+unrelated buffer or a later ordinary scroll.")
+
+  (defun my/smoothie-clear-search-pulse ()
+    "Ensure ordinary movement never inherits a search pulse."
+    (setq my/smoothie-last-match nil))
 
   (defun my/smoothie-c-d ()
     "Smooth C-d: `evil-scroll-down` then center, with scroll-margin disabled."
     (interactive)
+    (my/smoothie-clear-search-pulse)
     (let ((scroll-margin 0))
       (call-interactively #'evil-scroll-down))
     (evil-scroll-line-to-center nil))
@@ -139,6 +150,7 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (defun my/smoothie-c-u ()
     "Smooth C-u: `evil-scroll-up` then center, with scroll-margin disabled."
     (interactive)
+    (my/smoothie-clear-search-pulse)
     (let ((scroll-margin 0))
       (call-interactively #'evil-scroll-up))
     (evil-scroll-line-to-center nil))
@@ -146,6 +158,7 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (defun my/smoothie-page-down ()
     "Smooth Page Down: `evil-scroll-page-down` then center, with scroll-margin disabled."
     (interactive)
+    (my/smoothie-clear-search-pulse)
     (let ((scroll-margin 0))
       (call-interactively #'evil-scroll-page-down))
     (evil-scroll-line-to-center nil))
@@ -153,6 +166,7 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (defun my/smoothie-page-up()
     "Smooth Page Up: `evil-scroll-page-up` then center, with scroll-margin disabled."
     (interactive)
+    (my/smoothie-clear-search-pulse)
     (let ((scroll-margin 0))
       (call-interactively #'evil-scroll-page-up))
     (evil-scroll-line-to-center nil))
@@ -160,16 +174,24 @@ match-data can be clobbered by font-lock during a long scroll animation.")
   (defun my/smoothie-search-next ()
     "Smooth n: `evil-search-next` then center."
     (interactive)
+    (setq my/smoothie-last-match nil)
     (call-interactively #'evil-search-next)
     (evil-scroll-line-to-center nil)
-    (setq my/smoothie-last-match (cons (match-beginning 0) (match-end 0))))
+    (when (and (match-beginning 0) (match-end 0))
+      (setq my/smoothie-last-match
+            (list (current-buffer) (selected-window)
+                  (match-beginning 0) (match-end 0)))))
 
   (defun my/smoothie-search-previous ()
     "Smooth N: `evil-search-previous` then center."
     (interactive)
+    (setq my/smoothie-last-match nil)
     (call-interactively #'evil-search-previous)
     (evil-scroll-line-to-center nil)
-    (setq my/smoothie-last-match (cons (match-beginning 0) (match-end 0))))
+    (when (and (match-beginning 0) (match-end 0))
+      (setq my/smoothie-last-match
+            (list (current-buffer) (selected-window)
+                  (match-beginning 0) (match-end 0)))))
 
   ;; --- Key bindings (Evil paging keys; prefix arg / count preserved) ----------
   (define-key evil-normal-state-map (kbd "C-d")
