@@ -42,6 +42,9 @@
 (setq scroll-preserve-screen-position t) ; Keeps cursor at the same relative screen line when jumping
 (setq scroll-conservatively 101)          ; Tells Emacs to NEVER violently auto-recenter the page
 
+(add-to-list 'default-frame-alist '(width . 170))
+(add-to-list 'default-frame-alist '(height . 75))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 ;; package-initialize is intentionally omitted here as Emacs handles it natively now.
@@ -245,7 +248,7 @@ unrelated buffer or a later ordinary scroll.")
     (define-key evil-normal-state-map (kbd "C-c b b") #'bookmark-jump)  ; "Bookmark: Bookmarked locations"
     (define-key evil-normal-state-map (kbd "C-c b m") #'bookmark-set)   ; "Bookmark: Mark this location"
     (define-key evil-normal-state-map (kbd "C-c b l") #'bookmark-bmenu-list) ; "Bookmark: List all"
-)
+    )
 
 (use-package evil-collection
   :ensure t
@@ -265,6 +268,12 @@ unrelated buffer or a later ordinary scroll.")
   )
 
 (add-hook 'dired-mode-hook #'dired-hide-details-mode)
+
+(with-eval-after-load 'evil
+  (require 'move-text)
+  (evil-define-key 'visual 'global
+    (kbd "J") #'move-text-down
+    (kbd "K") #'move-text-up))
 
 (use-package treesit
   :ensure nil ; Built-in to Emacs 29+
