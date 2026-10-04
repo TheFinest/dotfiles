@@ -41,7 +41,6 @@
 (defvar smoothie--current-point-line nil)
 (defvar smoothie--subline-start 0.0)
 (defvar smoothie--subline-point 0.0)
-(defvar smoothie--last-time nil)
 (defvar smoothie--buffer nil)
 (defvar smoothie--window nil)
 
@@ -222,8 +221,7 @@ target view, the view is restored, and a timer animates toward the target."
             smoothie--target-start-line target-start-line
             smoothie--target-point-line target-point-line
             smoothie--buffer (current-buffer)
-            smoothie--window (selected-window)
-            smoothie--last-time (float-time))
+            smoothie--window (selected-window))
       ;; Keep an existing timer alive when another scroll command arrives.
       ;; This makes held/repeated C-u/C-d input retarget the current animation
       ;; instead of repeatedly starting from rest.

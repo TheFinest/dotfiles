@@ -17,7 +17,6 @@
 (setq load-prefer-newer t) ; Prefer .el files over .elc files when loading configs (i.e. favour recompiling this config file over using stale caches of it)
 
 (defun system-is-windows () (eq system-type 'windows-nt))
-(defun system-is-linux () (eq system-type 'gnu/linux))
 
 ;; If on Windows, inject Git for Windows Unix paths into Emacs environment
 (when (system-is-windows)
@@ -31,8 +30,8 @@
 (setq scroll-margin 8)                        ; set scrolloff=8
 (setq-default tab-width 4)                    ; set tabstop=4, shiftwidth=4
 (setq-default indent-tabs-mode nil)           ; set expandtab
-(setq make-backup-files nil)                  ; set nobackup
-(setq auto-save-default nil)                  ; set nowritebackup
+(setq make-backup-files nil)                  ; Disable backup files
+(setq auto-save-default nil)                  ; Disable auto-save recovery files
 
 ;; Cleanup UI
 (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))
@@ -54,7 +53,7 @@
   (package-refresh-contents))
 ;; Ensure 'use-package' is downloaded and ready to configure everything
 (unless (package-installed-p 'use-package)
-  (package-refresh-repositories)
+  (package-refresh-contents)
   (package-install 'use-package))
 (eval-when-compile (require 'use-package))
 (setq use-package-always-ensure t) ; Automatically downloads plugins when needed
@@ -73,27 +72,24 @@
   :config
   (setq undo-fu-session-directory (expand-file-name "undo-fu-session" user-emacs-directory))
   (setq undo-fu-session-incompatible-files '("\\.git/COMMIT_EDITMSG\\'"))
-  (setq unfo-fu-session-linear nil) ; Ensure full history tree structure is preserved
+  (setq undo-fu-session-linear nil) ; Ensure full history tree structure is preserved
   (setq undo-fu-session-compression 'zst)
 
   (add-hook 'focus-out-hook #'undo-fu-session-save) ; Save if window is focused out of
   (run-with-idle-timer 5 t #'undo-fu-session-save) ; Save every 5 seconds of idle time
-  (global-undo-fu-session-mode))
+  (undo-fu-session-global-mode))
 
 
 (use-package evil
   :ensure t
   :init
-  (setq evil-want-intergration t) ; Required by evil-collection
+  (setq evil-want-integration t) ; Required by evil-collection
   (setq evil-want-keybinding nil) ; Required background handshake flag & needed for evil-collection
   (setq evil-vsplit-window-right t) ; Vim-style splitting
   (setq evil-split-window-below t)
   :config
   (evil-mode 1)
   
-  ;; Unifies standard y/p mechanics with system clipboard
-  (setq evil-into-clipboard t)
-
   ;; Smoothie: inertia-based smooth scrolling (core engine; no evil dep)
   (require 'smoothie)
 
