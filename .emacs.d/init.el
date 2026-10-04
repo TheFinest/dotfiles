@@ -104,6 +104,9 @@
   ;; (pulse-available-p), which can be nil if pulse loads before the theme sets
   ;; frame colors. Force it on since GUI frames always support pulsing.
   (setq pulse-flag t)
+  (defvar my/smoothie-last-match nil
+    "Pending search match as (BUFFER WINDOW BEG END).")
+
   (defun my/smoothie-suppress-evil-flash (orig-fun string &optional all)
     "Skip evil's search flash while smoothie is capturing or animating."
     (unless (smoothie-active-p)
@@ -115,82 +118,82 @@
     "Pulse the current search match (red fade) after a smoothie animation.
 Uses match bounds captured by the search wrapper (not live match-data, which
 can be clobbered by font-lock during a long scroll animation)."
-    (when (and my/smoothie-last-match
-               (eq (nth 0 my/smoothie-last-match) (current-buffer))
-               (eq (nth 1 my/smoothie-last-match) (selected-window)))
-      (let ((beg (nth 2 my/smoothie-last-match))
-            (end (nth 3 my/smoothie-last-match)))
+    (when my/smoothie-last-match
+      (let ((pending my/smoothie-last-match))
         (setq my/smoothie-last-match nil)
-        (when (and (integer-or-marker-p beg)
-                   (integer-or-marker-p end)
-                   (<= beg end)
-                   (<= end (point-max)))
-          (pulse-momentary-highlight-region beg end 'next-error)))))
+        (let ((buffer (nth 0 pending))
+              (window (nth 1 pending))
+              (beg (nth 2 pending))
+              (end (nth 3 pending)))
+          (when (and (eq buffer (current-buffer))
+                     (eq window (selected-window))
+                     (integer-or-marker-p beg)
+                     (integer-or-marker-p end)
+                     (<= (point-min) beg)
+                     (< beg end)
+                     (<= end (point-max)))
+            (pulse-momentary-highlight-region beg end 'next-error))))))
   (add-hook 'smoothie-finish-hook #'my/smoothie-pulse-current-match)
 
   ;; --- Smoothie wrapper commands (scroll then `zz` center) ---
-  (defvar my/smoothie-last-match nil
-    "Pending search match for the current smoothie animation.
-The value is (BUFFER WINDOW BEG END), so an old search cannot pulse an
-unrelated buffer or a later ordinary scroll.")
-
-  (defun my/smoothie-clear-search-pulse ()
-    "Ensure ordinary movement never inherits a search pulse."
-    (setq my/smoothie-last-match nil))
+  (defun my/smoothie-scroll-and-center (command)
+    "Run scrolling COMMAND with margins disabled, then center point."
+    (setq my/smoothie-last-match nil)
+    (let ((scroll-margin 0))
+      (condition-case nil
+          (call-interactively command)
+        ((beginning-of-buffer end-of-buffer) nil)))
+    (evil-scroll-line-to-center nil))
 
   (defun my/smoothie-c-d ()
     "Smooth C-d: `evil-scroll-down` then center, with scroll-margin disabled."
     (interactive)
-    (my/smoothie-clear-search-pulse)
-    (let ((scroll-margin 0))
-      (call-interactively #'evil-scroll-down))
-    (evil-scroll-line-to-center nil))
+    (my/smoothie-scroll-and-center #'evil-scroll-down))
 
   (defun my/smoothie-c-u ()
     "Smooth C-u: `evil-scroll-up` then center, with scroll-margin disabled."
     (interactive)
-    (my/smoothie-clear-search-pulse)
-    (let ((scroll-margin 0))
-      (call-interactively #'evil-scroll-up))
-    (evil-scroll-line-to-center nil))
+    (my/smoothie-scroll-and-center #'evil-scroll-up))
 
   (defun my/smoothie-page-down ()
     "Smooth Page Down: `evil-scroll-page-down` then center, with scroll-margin disabled."
     (interactive)
-    (my/smoothie-clear-search-pulse)
-    (let ((scroll-margin 0))
-      (call-interactively #'evil-scroll-page-down))
-    (evil-scroll-line-to-center nil))
+    (my/smoothie-scroll-and-center #'evil-scroll-page-down))
 
-  (defun my/smoothie-page-up()
+  (defun my/smoothie-page-up ()
     "Smooth Page Up: `evil-scroll-page-up` then center, with scroll-margin disabled."
     (interactive)
-    (my/smoothie-clear-search-pulse)
-    (let ((scroll-margin 0))
-      (call-interactively #'evil-scroll-page-up))
-    (evil-scroll-line-to-center nil))
+    (my/smoothie-scroll-and-center #'evil-scroll-page-up))
+
+  (defun my/smoothie-search (command)
+    "Run search COMMAND, save its match, and center point."
+    (let ((pattern (if evil-regexp-search
+                       (car-safe regexp-search-ring)
+                     (car-safe search-ring))))
+      (setq my/smoothie-last-match nil)
+      (call-interactively command)
+      (let* ((beg (match-beginning 0))
+             (end (match-end 0))
+             (match (and (stringp pattern)
+                         (> (length pattern) 0)
+                         beg end
+                         (= (point) beg)
+                         (<= (point-min) beg)
+                         (<= beg end)
+                         (<= end (point-max))
+                         (list (current-buffer) (selected-window) beg end))))
+        (evil-scroll-line-to-center nil)
+        (setq my/smoothie-last-match match))))
 
   (defun my/smoothie-search-next ()
-    "Smooth n: `evil-search-next` then center."
+    "Smooth n: repeat the last search forward, then center."
     (interactive)
-    (setq my/smoothie-last-match nil)
-    (call-interactively #'evil-search-next)
-    (evil-scroll-line-to-center nil)
-    (when (and (match-beginning 0) (match-end 0))
-      (setq my/smoothie-last-match
-            (list (current-buffer) (selected-window)
-                  (match-beginning 0) (match-end 0)))))
+    (my/smoothie-search #'evil-search-next))
 
   (defun my/smoothie-search-previous ()
-    "Smooth N: `evil-search-previous` then center."
+    "Smooth N: repeat the last search backward, then center."
     (interactive)
-    (setq my/smoothie-last-match nil)
-    (call-interactively #'evil-search-previous)
-    (evil-scroll-line-to-center nil)
-    (when (and (match-beginning 0) (match-end 0))
-      (setq my/smoothie-last-match
-            (list (current-buffer) (selected-window)
-                  (match-beginning 0) (match-end 0)))))
+    (my/smoothie-search #'evil-search-previous))
 
   ;; --- Key bindings (Evil paging keys; prefix arg / count preserved) ----------
   (define-key evil-normal-state-map (kbd "C-d")
