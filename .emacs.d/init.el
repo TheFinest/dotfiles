@@ -240,8 +240,8 @@ can be clobbered by font-lock during a long scroll animation)."
   ;; Ctrl+c u -> Visual Undo Tree Map (Vundo)
   (define-key evil-normal-state-map (kbd "C-c u") 'vundo)
 
-  ;; Ctrl+c f -> Sidebar Project File Tree
-  (define-key evil-normal-state-map (kbd "C-c t") 'dired-sidebar-toggle-sidebar)
+  ;; Ctrl+c t -> Project File Tree
+  (define-key evil-normal-state-map (kbd "C-c t") #'treemacs)
 
     ;; Fast Travel: Mnemonic "b" for Bookmark
     (define-key evil-normal-state-map (kbd "C-c b b") #'bookmark-jump)  ; "Bookmark: Bookmarked locations"
@@ -268,8 +268,22 @@ can be clobbered by font-lock during a long scroll animation)."
 
 (add-hook 'dired-mode-hook #'dired-hide-details-mode)
 
-(with-eval-after-load 'evil
-  (require 'move-text)
+(use-package dired-subtree
+  :ensure t
+  :commands (dired-subtree-insert dired-subtree-remove))
+
+(use-package git-timemachine
+  :ensure t
+  :commands (git-timemachine))
+
+(use-package imenu-list
+  :ensure t
+  :commands (imenu-list-smart-toggle))
+
+(use-package move-text
+  :ensure t
+  :after evil
+  :config
   (evil-define-key 'visual 'global
     (kbd "J") #'move-text-down
     (kbd "K") #'move-text-up))
@@ -295,9 +309,13 @@ can be clobbered by font-lock during a long scroll animation)."
   :config
   (treesit-auto-add-to-auto-mode-alist))
 
-(use-package dired-sidebar
+(use-package treemacs
   :ensure t
-  :commands (dired-sidebar-toggle-sidebar))
+  :commands (treemacs))
+
+(use-package treemacs-evil
+  :ensure t
+  :after (treemacs evil))
 
 ;(defun post-text-scale-callback ()
 ;  ;; fix line number text size
