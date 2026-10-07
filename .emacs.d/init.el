@@ -265,6 +265,14 @@ can be clobbered by font-lock during a long scroll animation)."
   :config
   (evil-collection-init)
 
+  (defun my/eshell-bind-enter-to-send-input ()
+    (evil-define-key 'insert eshell-mode-map
+      (kbd "RET") #'eshell-send-input
+      (kbd "<return>") #'eshell-send-input
+      (kbd "C-m") #'eshell-send-input))
+  (add-hook 'eshell-first-time-mode-hook
+            #'my/eshell-bind-enter-to-send-input t)
+
   (evil-define-key 'normal dired-mode-map
     (kbd "h") 'dired-up-directory ; 'h' goes back/up a directory
     (kbd "<backspace>") 'dired-up-directory ; Backspace also goes back/up
