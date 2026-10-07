@@ -276,6 +276,15 @@ can be clobbered by font-lock during a long scroll animation)."
     (kbd "<escape>") 'vundo-quit)
   )
 
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode 1))
+
+(use-package ace-window
+  :ensure t
+  :bind ("M-o" . ace-window))
+
 (add-hook 'dired-mode-hook #'dired-hide-details-mode)
 
 (use-package dired-subtree
@@ -434,30 +443,34 @@ otherwise start from the parent directory, max 3 levels deep."
     (xclip-mode 1)))
 
 (use-package dumb-jump
-  :ensure t)
+  :ensure t
+  :config
+  (when (executable-find "rg")
+    (setq dumb-jump-prefer-searcher 'rg))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate t))
 
 (use-package lsp-mode
   :ensure t
-  :defer t)
-
-(defun my/evil-goto-definition ()
-  "Use LSP for definitions, falling back to Dumb Jump."
-  (interactive)
-  (if (and (bound-and-true-p lsp-mode)
-           (fboundp 'lsp-workspaces)
-           (fboundp 'lsp-find-definition)
-           (lsp-workspaces))
-      (condition-case _error
-          (call-interactively #'lsp-find-definition)
-        (error
-         (message "LSP lookup failed; trying Dumb Jump")
-         (call-interactively #'dumb-jump-go)))
-    (call-interactively #'dumb-jump-go)))
+  :commands (lsp lsp-deferred)
+  :hook ((python-mode . lsp-deferred)
+         (python-ts-mode . lsp-deferred)
+         (js-mode . lsp-deferred)
+         (js-ts-mode . lsp-deferred)
+         (c-mode . lsp-deferred)
+         (c-ts-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (c++-ts-mode . lsp-deferred)
+         (rust-mode . lsp-deferred)
+         (rust-ts-mode . lsp-deferred)
+         (css-mode . lsp-deferred)
+         (css-ts-mode . lsp-deferred)
+         (lua-mode . lsp-deferred)
+         (fsharp-mode . lsp-deferred)))
 
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map
               (kbd "g d")
-              #'my/evil-goto-definition))
+              #'xref-find-definitions))
 
 ;; MAGIT (The Git Engine)
 (use-package magit
