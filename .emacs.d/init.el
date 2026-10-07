@@ -140,9 +140,19 @@ can be clobbered by font-lock during a long scroll animation)."
     "Run scrolling COMMAND with margins disabled, then center point."
     (setq my/smoothie-last-match nil)
     (let ((scroll-margin 0))
-      (condition-case nil
+      (condition-case err
           (call-interactively command)
-        ((beginning-of-buffer end-of-buffer) nil)))
+        ((beginning-of-buffer end-of-buffer)
+         (goto-char (if (eq (car err) 'beginning-of-buffer)
+                        (point-min)
+                      (point-max))))))
+    (cond
+     ((and (memq command '(evil-scroll-up evil-scroll-page-up))
+           (= (window-start) (point-min)))
+      (goto-char (point-min)))
+     ((and (memq command '(evil-scroll-down evil-scroll-page-down))
+           (eobp))
+      (goto-char (point-max))))
     (evil-scroll-line-to-center nil))
 
   (defun my/smoothie-c-d ()
