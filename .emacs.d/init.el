@@ -358,6 +358,14 @@ can be clobbered by font-lock during a long scroll animation)."
   :custom
   (completion-styles '(orderless basic)))
 
+(use-package company
+  :ensure t
+  :init
+  (global-company-mode)
+  :custom
+  (company-idle-delay 0.2)
+  (company-minimum-prefix-length 2))
+
 (use-package consult
   :ensure t
   :config
@@ -436,6 +444,11 @@ otherwise start from the parent directory, max 3 levels deep."
   :defer t
   :mode "\\.lua\\'")
 
+(use-package csharp-mode
+  :ensure t
+  :defer t
+  :mode "\\.cs\\'")
+
 (use-package fsharp-mode
   :defer t
   :mode "\\.fs[xi]?\\'"
@@ -473,6 +486,7 @@ otherwise start from the parent directory, max 3 levels deep."
          (css-mode . lsp-deferred)
          (css-ts-mode . lsp-deferred)
          (lua-mode . lsp-deferred)
+         (csharp-mode . lsp-deferred)
          (fsharp-mode . lsp-deferred)))
 
 (with-eval-after-load 'evil
